@@ -313,6 +313,26 @@ static void EntityLogDamage(rage::fwEntity* victim, rage::fwEntity* culprit, uin
 	OnEntityDamaged(md);
 }
 
+static void (*oBulletCreated)(void* _this, void* pWeaponInfo, const Vector3& vStart, const Vector3& vEnd, float fVelocity, uint32_t uWeaponHash, bool bCreatesTrace, bool bIsAccurate);
+
+static void bulletCreateHook(void* _this, void* pWeaponInfo, const Vector3& vStart, const Vector3& vEnd, float fVelocity, uint32_t uWeaponHash, bool bCreatesTrace, bool bIsAccurate)
+{
+	BulletCreateMetaData md;
+	md.startX = vStart.x;
+	md.startY = vStart.y;
+	md.startZ = vStart.z;
+	md.endX = vEnd.x;
+	md.endY = vEnd.y;
+	md.endZ = vEnd.z;
+	md.velocity = fVelocity;
+	md.weaponHash = uWeaponHash;
+	md.createsTrace = bCreatesTrace;
+	md.isAccurate = bIsAccurate;
+	OnBulletCreate(md);
+
+	oBulletCreated(_this, pWeaponInfo, vStart, vEnd, fVelocity, uWeaponHash, bCreatesTrace, bIsAccurate);
+};
+
 static HookFunction hookFunction([]()
 {
 	MH_Initialize();
@@ -363,6 +383,12 @@ static HookFunction hookFunction([]()
 	}
 
 	MH_CreateHook(hook::get_pattern("21 4D D8 21 4D DC 41 8B D8", -0x1F), EntityLogDamage, (void**)&origEntityLogDamage);
+	MH_STATUS status = MH_CreateHook(hook::get_pattern("48 89 5C 24 ? 57 48 83 EC ? 41 8B 00 F3 0F 10 4C 24"), bulletCreateHook, (void**)&oBulletCreated);
+	if (status != MH_OK)
+	{
+		trace("Failed to create hook: %s\n", MH_StatusToString(status));
+		return;
+	}
 
 	/* // ped damage specific
 	if (xbr::IsGameBuildOrGreater<2060>())
@@ -377,7 +403,6 @@ static HookFunction hookFunction([]()
 
 	MH_EnableHook(MH_ALL_HOOKS);
 
-	/*
 	OnTriggerGameEvent.Connect([](const GameEventMetaData& data)
 	{
 		std::stringstream argStr;
@@ -391,9 +416,9 @@ static HookFunction hookFunction([]()
 
 		trace("game event %s, args %s\n", data.name, argStr.str());
 	});
-	*/
 });
 
 fwEvent<const GameEventMetaData&> OnTriggerGameEvent;
 fwEvent<const GameEventData&> OnTriggerGameEventExt;
 fwEvent<const DamageEventMetaData&> OnEntityDamaged;
+fwEvent<const BulletCreateMetaData&> OnBulletCreate;

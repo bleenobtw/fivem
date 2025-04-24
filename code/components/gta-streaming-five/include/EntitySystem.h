@@ -902,6 +902,22 @@ struct DamageEventMetaData
 
 STREAMING_EXPORT extern fwEvent<const DamageEventMetaData&> OnEntityDamaged;
 
+struct BulletCreateMetaData
+{
+	float startX;
+	float startY;
+	float startZ;
+	float endX;
+	float endY;
+	float endZ;
+	float velocity;
+	uint32_t weaponHash;
+	bool createsTrace;
+	bool isAccurate;
+};
+
+STREAMING_EXPORT extern fwEvent<const BulletCreateMetaData&> OnBulletCreate;
+
 class CMapData;
 
 struct CMapDataContents : XBR_VIRTUAL_BASE_2802(0)

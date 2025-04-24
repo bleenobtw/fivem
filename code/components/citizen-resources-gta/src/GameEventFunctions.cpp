@@ -80,5 +80,37 @@ static InitFunction initFunction([]
 			int64_t(int(data.weapon)),
 			data.baseDamage);
 	});
+
+	OnBulletCreate.Connect([](const BulletCreateMetaData& data)
+	{
+		auto resman = Instance<fx::ResourceManager>::Get();
+		auto rec = resman->GetComponent<fx::ResourceEventManagerComponent>();
+		/*NETEV bulletCreate CLIENT
+		/#*
+		 * An event that is triggered when a bullet is created.
+		 *
+		 * @param start - The start position of the bullet.
+		 * @param end - The end position of the bullet.
+		 * @param velocity - The velocity of the bullet.
+		 * @param weaponHash - The hash of the weapon used to create the bullet.
+		 * @param createsTrace - Whether the bullet creates a trace or not.
+		 * @param isAccurate - Whether the bullet is accurate or not.
+		 #/
+		declare function bulletCreate(start: vector3, end: vector3, velocity: number, weaponHash: number, createsTrace: boolean, isAccurate: boolean): void;
+		*/
+		rec->QueueEvent2(
+			"bulletCreate",
+			{},
+			data.startX,
+			data.startY,
+			data.startZ,
+			data.endX,
+			data.endY,
+			data.endZ,
+			data.velocity,
+			int64_t(int(data.weaponHash)),
+			data.createsTrace,
+			data.isAccurate);
+	});
 });
 #endif
